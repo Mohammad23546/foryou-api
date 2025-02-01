@@ -3,6 +3,22 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 import uuid
+import jwt
+from datetime import datetime, timedelta
+
+def generate_verification_token(user):
+    """
+    إنشاء توكن للتحقق من البريد الإلكتروني
+    """
+    payload = {
+        'user_id': user.id,
+        'exp': datetime.utcnow() + timedelta(days=1),  # التوكن صالح لمدة يوم واحد
+        'iat': datetime.utcnow(),
+        'type': 'email_verification'
+    }
+    
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    return token
 
 def send_verification_email(user, token):
     try:
