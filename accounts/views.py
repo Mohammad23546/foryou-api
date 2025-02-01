@@ -63,12 +63,12 @@ def test(request):
 @permission_classes([AllowAny])
 def register(request):
     try:
-        print("Received registration data:", request.data)  # لطباعة البيانات المستلمة
-        
+        print("Received registration data:", request.data)
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(request.data['password'])
+            user.is_active = False  # جعل الحساب غير مفعل عند التسجيل
             user.save()
             
             token = generate_verification_token(user)
@@ -98,115 +98,60 @@ def register(request):
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login_view(request):
+def login(request):
     try:
-        print("\n=== بداية طلب تسجيل الدخول ===")
-        print(f"البيانات المستلمة: {request.data}")
+        print("=== بداية طلب تسجيل الدخول ===")
+        data = request.data
+        print("البيانات المستلمة:", data)
         
-        # التحقق من وجود البيانات المطلوبة
-        if not request.data:
-            print("خطأ: لا توجد بيانات مرسلة")
-            return Response({
-                'success': False,
-                'error': 'يرجى إدخال البريد الإلكتروني وكلمة المرور',
-                'duration': 5000
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        email = request.data.get('email')
-        password = request.data.get('password')
-        
+        email = data.get('email')
+        password = data.get('password')
         print(f"البريد الإلكتروني: {email}")
-        print(f"كلمة المرور: {'*' * len(password) if password else None}")
-
-        # التحقق من إدخال البريد الإلكتروني وكلمة المرور
-        if not email or not password:
-            print("خطأ: البريد الإلكتروني أو كلمة المرور غير موجودة")
-            return Response({
-                'success': False,
-                'error': 'يرجى إدخال البريد الإلكتروني وكلمة المرور',
-                'duration': 5000
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+        print("كلمة المرور: ***********")
+        
+        User = get_user_model()
         try:
             user = User.objects.get(email=email)
             print(f"تم العثور على المستخدم: {user.email}")
             
-            # التحقق من كلمة المرور
-            if not user.check_password(password):
-                print("خطأ: كلمة المرور غير صحيحة")
-                return Response({
-                    'success': False,
-                    'error': 'كلمة المرور غير صحيحة',
-                    'duration': 5000
-                }, status=status.HTTP_401_UNAUTHORIZED)
-            
-            # التحقق من تفعيل الحساب
-            verification = EmailVerification.objects.filter(user=user).first()
-            print(f"حالة التحقق: {verification.is_verified if verification else 'لا يوجد تحقق'}")
-            
-            # إذا لم يكن هناك سجل تحقق أو الحساب غير مفعل
-            if not verification or not verification.is_verified:
-                # إذا لم يكن هناك سجل تحقق، نقوم بإنشاء واحد
-                if not verification:
-                    print("إنشاء سجل تحقق جديد")
-                    token = uuid.uuid4()
-                    verification = EmailVerification.objects.create(
-                        user=user,
-                        token=token,
-                        is_verified=False
-                    )
-                
-                # إرسال رابط التفعيل
-                print("إرسال رابط التفعيل")
-                send_verification_email(user, verification.token)
-                
-                response_data = {
-                    'success': False,
-                    'error': 'حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني لتفعيل حسابك',
-                    'requires_activation': True,
-                    'duration': 5000
-                }
-                print(f"إرسال رد: {response_data}")
-                return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
-            
-            # إذا كل شيء صحيح، نقوم بتسجيل الدخول
-            print("تسجيل الدخول بنجاح")
-            refresh = RefreshToken.for_user(user)
-            
-            response_data = {
-                'success': True,
-                'message': 'تم تسجيل الدخول بنجاح',
-                'duration': 3000,
-                'token': {
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh)
-                },
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'full_name': user.full_name,
-                    'profile_image': user.profile_image.url if user.profile_image else None
-                }
-            }
-            print(f"إرسال رد: {response_data}")
-            return Response(response_data)
+            if user.check_password(password):
+                if user.is_active:  # نتحقق فقط من is_active
+                    refresh = RefreshToken.for_user(user)
+                    return Response({
+                        'success': True,
+                        'token': str(refresh.access_token),
+                        'refresh': str(refresh),
+                        'user': {
+                            'id': user.id,
+                            'email': user.email,
+                            'username': user.username
+                        }
+                    })
+                else:
+                    # إذا لم يكن الحساب مفعلاً
+                    token = generate_verification_token(user)
+                    send_verification_email(user, token)
+                    return Response({
+                        'success': False,
+                        'error': 'حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني لتفعيل حسابك',
+                        'requires_activation': True,
+                        'duration': 5000
+                    }, status=401)
             
         except User.DoesNotExist:
-            print(f"خطأ: لم يتم العثور على مستخدم بالبريد {email}")
-            return Response({
-                'success': False,
-                'error': 'البريد الإلكتروني غير مسجل',
-                'should_register': True,
-                'duration': 5000
-            }, status=status.HTTP_401_UNAUTHORIZED)
+            print(f"لم يتم العثور على مستخدم بالبريد: {email}")
             
-    except Exception as e:
-        print(f"خطأ غير متوقع: {str(e)}")
         return Response({
             'success': False,
-            'error': 'حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى',
-            'duration': 5000
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            'error': 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        }, status=401)
+        
+    except Exception as e:
+        print(f"خطأ في تسجيل الدخول: {str(e)}")
+        return Response({
+            'success': False,
+            'error': 'حدث خطأ أثناء تسجيل الدخول'
+        }, status=500)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
