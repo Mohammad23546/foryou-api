@@ -68,22 +68,37 @@ def register(request):
             user.set_password(request.data['password'])
             user.save()
             
-            # إنشاء توكن التحقق
-            token = generate_verification_token(user)
-            
-            # تحديث رابط التحقق ليستخدم API الجديد
-            verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
-            
-            # إرسال رابط التحقق عبر البريد
-            send_verification_email(user.email, verification_url)
-            
-            return Response({
-                'success': True,
-                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
-                'verification_url': verification_url  # الرابط البديل
-            })
+            try:
+                # إنشاء توكن التحقق
+                token = generate_verification_token(user)
+                
+                # تحديث رابط التحقق
+                verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
+                
+                # محاولة إرسال البريد
+                email_sent = send_verification_email(user, token)
+                
+                if not email_sent:
+                    return Response({
+                        'error': 'فشل في إرسال بريد التحقق',
+                        'details': 'حدث خطأ أثناء إرسال البريد الإلكتروني'
+                    }, status=500)
+                
+                return Response({
+                    'success': True,
+                    'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+                    'verification_url': verification_url
+                })
+            except Exception as email_error:
+                print(f"Email Error: {str(email_error)}")  # لتتبع الخطأ
+                return Response({
+                    'error': 'خطأ في إرسال البريد',
+                    'details': str(email_error)
+                }, status=500)
+                
         return Response({'error': serializer.errors}, status=400)
     except Exception as e:
+        print(f"Registration Error: {str(e)}")  # لتتبع الخطأ
         return Response({'error': str(e)}, status=500)
 
 @csrf_exempt
