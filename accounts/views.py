@@ -319,23 +319,18 @@ def delete_account(request):
 def logout_view(request):
     try:
         refresh_token = request.data.get('refresh')
-        if refresh_token:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-            return Response({
-                'success': True,
-                'message': 'تم تسجيل الخروج بنجاح'
-            })
+        token = RefreshToken(refresh_token)
+        token.blacklist()
         return Response({
-            'success': False,
-            'error': 'لم يتم توفير توكن التحديث'
-        }, status=status.HTTP_400_BAD_REQUEST)
+            'success': True,
+            'message': 'تم تسجيل الخروج بنجاح'
+        })
     except Exception as e:
-        print(f"خطأ في logout: {str(e)}")
+        print(f"Logout error: {str(e)}")
         return Response({
             'success': False,
-            'error': 'حدث خطأ أثناء تسجيل الخروج'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            'message': 'حدث خطأ أثناء تسجيل الخروج'
+        }, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
