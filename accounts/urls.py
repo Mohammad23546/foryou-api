@@ -8,4 +8,5 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('verify-email/<str:token>/', views.verify_email, name='verify_email'),
     path('change-password/', views.change_password, name='change_password'),
+    path('verify-email/', views.verify_email, name='verify-email'),
 ] 

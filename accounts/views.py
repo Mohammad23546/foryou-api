@@ -208,37 +208,56 @@ def login_view(request):
             'duration': 5000
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@csrf_exempt
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def verify_email(request):
     try:
         token = request.GET.get('token')
         if not token:
-            return Response({'error': 'Token is required'}, status=400)
-        
+            return render(request, 'error.html', {
+                'message': 'رمز التحقق غير صالح'
+            })
+
+        # فك تشفير التوكن
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            user_id = payload['user_id']
+            user_id = payload.get('user_id')
+            
+            if not user_id:
+                return render(request, 'error.html', {
+                    'message': 'رمز التحقق غير صالح'
+                })
+                
+            # البحث عن المستخدم
+            User = get_user_model()
             user = User.objects.get(id=user_id)
             
-            if user.is_verified:
-                # تحديث الرابط هنا
-                return redirect('https://foryou-api.onrender.com/verification-success')
-            
-            user.is_verified = True
+            # تفعيل الحساب
+            user.is_active = True
             user.save()
             
-            # وهنا أيضاً
-            return redirect('https://foryou-api.onrender.com/verification-success')
+            return render(request, 'success.html', {
+                'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.'
+            })
             
         except jwt.ExpiredSignatureError:
-            return Response({'error': 'Verification link has expired'}, status=400)
-        except (jwt.DecodeError, User.DoesNotExist):
-            return Response({'error': 'Invalid token'}, status=400)
+            return render(request, 'error.html', {
+                'message': 'انتهت صلاحية رمز التحقق'
+            })
+        except jwt.InvalidTokenError:
+            return render(request, 'error.html', {
+                'message': 'رمز التحقق غير صالح'
+            })
+        except User.DoesNotExist:
+            return render(request, 'error.html', {
+                'message': 'المستخدم غير موجود'
+            })
             
     except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        print(f"Verification error: {str(e)}")
+        return render(request, 'error.html', {
+            'message': 'حدث خطأ أثناء التحقق'
+        })
 
 @api_view(['POST'])
 def test(request):
