@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # نقل هذا التعريف إلى أعلى الملف (بعد load_dotenv مباشرة)
-API_BASE_URL = os.getenv('API_BASE_URL', 'http://192.168.8.6:8000')
+API_BASE_URL = os.getenv('API_BASE_URL', 'https://foryou-api.onrender.com')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -223,7 +223,7 @@ CACHES = {
 }
 
 # إعدادات API
-API_BASE_URL = 'http://192.168.8.6:8000'
+# API_BASE_URL = 'http://192.168.8.6:8000'
 
 # لا تستخدم هذا في الإنتاج
 DEBUG = False

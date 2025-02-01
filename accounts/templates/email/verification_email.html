@@ -2,50 +2,44 @@
 <html dir="rtl" lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل حساب تطبيق لأجلك</title>
+    <title>تفعيل الحساب</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f5f7fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; line-height: 1.6;">
-    <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
-        <div style="background: linear-gradient(45deg, #FF4B2B, #FF416C); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px; font-weight: 600;">مرحباً {{ user.full_name }}! ⭐</h1>
-        </div>
-
-        <div style="padding: 30px; text-align: center;">
-            <img src="https://i.ibb.co/gMpMmf3/check-mark-5290058.png" alt="تفعيل" style="width: 80px; height: 80px; margin-bottom: 20px; display: block; margin: 0 auto;">
-            
-            <h2 style="color: #2c3e50; margin-bottom: 20px; font-size: 22px;">شكراً لانضمامك إلى عائلة تطبيق "لأجلك"! 🚀</h2>
-            
-            <p style="color: #666; margin-bottom: 30px; font-size: 16px;">
-                نحن متحمسون لأن تكون جزءًا من مجتمعنا المميز. لتفعيل حسابك والوصول إلى جميع ميزات تطبيقنا، يرجى النقر على الزر أدناه:
-            </p>
-
-            <a href="{{ verification_link }}" style="display: inline-block; background: linear-gradient(45deg, #FF4B2B, #FF416C); color: white; padding: 15px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(255, 75, 43, 0.3);">تفعيل الحساب الآن 👈</a>
-
-            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
-                إذا لم يعمل الزر، يمكنك نسخ الرابط التالي ولصقه في متصفحك:
-            </p>
-            
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 30px; word-break: break-all; font-size: 14px; color: #666;">
-                {{ verification_link }}
-            </div>
-
-            <div style="background: #fff3e0; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: right;">
-                <h3 style="color: #ff6b2b; margin-bottom: 15px; font-size: 18px;">🔒 لماذا تحتاج إلى تفعيل حسابك؟</h3>
-                <ul style="color: #666; margin: 0; padding-right: 20px; font-size: 15px;">
-                    <li style="margin-bottom: 8px;">لضمان أمان بياناتك</li>
-                    <li style="margin-bottom: 8px;">للحصول على الإشعارات والتذكيرات المخصصة</li>
-                    <li style="margin-bottom: 8px;">لإدارة مهامك اليومية بكفاءة</li>
-                    <li style="margin-bottom: 8px;">لتتبع الأحداث المميزة في حياتك</li>
-                </ul>
-            </div>
-
-            <p style="color: #666; font-size: 14px; margin-top: 20px; text-align: center;">
-                نتطلع لرؤيتك في تطبيق "لأجلك"! 🌟<br>
-                مع تحياتنا،<br>
-                فريق تطبيق "لأجلك" ❤️
-            </p>
-        </div>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+    <div style="background: linear-gradient(45deg, #FF4B2B, #FF416C); padding: 20px; text-align: center; color: white;">
+        <h1 style="margin: 0;">مرحباً {{ user.first_name }}! ⭐</h1>
+    </div>
+    
+    <div style="padding: 30px; text-align: center;">
+        <img src="https://example.com/check.png" alt="✓" style="width: 60px; height: 60px; margin-bottom: 20px;">
+        
+        <h2 style="color: #2c3e50; margin-bottom: 20px;">
+            !شكراً لانضمامك إلى عائلة تطبيق "لأجلك" 🚀
+        </h2>
+        
+        <p style="color: #34495e; margin-bottom: 30px; font-size: 16px;">
+            نحن متحمسون لأن تكون جزءاً من مجتمعنا المميز. لتفعيل حسابك والوصول إلى جميع ميزات تطبيقنا،
+            <br>يرجى النقر على الزر أدناه:
+        </p>
+        
+        <a href="https://foryou-api.onrender.com/api/auth/verify-email/?token={{ token }}" 
+           style="background: linear-gradient(45deg, #FF4B2B, #FF416C); 
+                  color: white; 
+                  text-decoration: none; 
+                  padding: 12px 30px; 
+                  border-radius: 25px; 
+                  font-weight: 600; 
+                  display: inline-block; 
+                  margin-bottom: 20px;">
+            تفعيل الحساب 👋
+        </a>
+        
+        <p style="color: #7f8c8d; font-size: 14px;">
+            :إذا لم يعمل الزر، يمكنك نسخ الرابط التالي ولصقه في متصفحك
+            <br>
+            <span style="color: #95a5a6; word-break: break-all;">
+                https://foryou-api.onrender.com/api/auth/verify-email/?token={{ token }}
+            </span>
+        </p>
     </div>
 </body>
 </html> 

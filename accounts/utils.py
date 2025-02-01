@@ -6,13 +6,13 @@ import uuid
 
 def send_verification_email(user, token):
     try:
-        token_str = str(token).replace('-', '')
-        token_uuid = f"{token_str[:8]}-{token_str[8:12]}-{token_str[12:16]}-{token_str[16:20]}-{token_str[20:]}"
-        verification_link = f"{settings.API_BASE_URL}/api/auth/verify-email/{token_uuid}/"
+        # تحديث طريقة إنشاء رابط التحقق
+        verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
         
         context = {
             'user': user,
-            'verification_link': verification_link
+            'token': token,  # نرسل التوكن مباشرة
+            'verification_url': verification_url
         }
         
         html_message = render_to_string('email/verification_email.html', context)

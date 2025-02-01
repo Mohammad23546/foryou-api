@@ -25,6 +25,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import BasePermission
 from django.views.decorators.csrf import csrf_exempt
 import uuid
+from django.conf import settings
+import jwt
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 logger = logging.getLogger(__name__)
 
@@ -58,79 +62,29 @@ def test(request):
 @permission_classes([AllowAny])
 def register(request):
     try:
-        print("=== بداية طلب التسجيل ===")
-        print(f"نوع الطلب: {request.method}")
-        print(f"المسار: {request.path}")
-        print(f"نوع المحتوى: {request.content_type}")
-        print(f"الرؤوس: {request.headers}")
-        print(f"البيانات الخام: {request.body}")
-        print(f"البيانات المعالجة: {request.data}")
-        
-        email = request.data.get('email', '').strip()
-        full_name = request.data.get('full_name', '').strip()
-        password = request.data.get('password', '').strip()
-        
-        print(f"البريد: {email}")
-        print(f"الاسم: {full_name}")
-        print(f"كلمة المرور: {'*' * len(password)}")
-        
-        # التحقق من وجود المستخدم
-        if User.objects.filter(email=email).exists():
-            return Response({
-                'success': False,
-                'error': 'البريد الإلكتروني مسجل مسبقاً',
-                'duration': 5000  # مدة ظهور الرسالة بالميلي ثانية
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # إنشاء المستخدم
-        user = User.objects.create_user(
-            username=email,
-            email=email,
-            password=password,
-            full_name=full_name
-        )
-        
-        # إنشاء توكن التحقق
-        token = uuid.uuid4()
-        EmailVerification.objects.create(
-            user=user,
-            token=token
-        )
-        
-        # إرسال بريد التحقق
-        if send_verification_email(user, token):
-            # إنشاء توكن JWT
-            refresh = RefreshToken.for_user(user)
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            user.set_password(request.data['password'])
+            user.save()
+            
+            # إنشاء توكن التحقق
+            token = generate_verification_token(user)
+            
+            # تحديث رابط التحقق ليستخدم API الجديد
+            verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
+            
+            # إرسال رابط التحقق عبر البريد
+            send_verification_email(user.email, verification_url)
             
             return Response({
                 'success': True,
-                'message': 'تم إنشاء الحساب بنجاح! يرجى تفعيل حسابك من خلال الرابط المرسل إلى بريدك الإلكتروني',
-                'duration': 5000,  # مدة ظهور الرسالة بالميلي ثانية
-                'token': {
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh)
-                },
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'full_name': user.full_name,
-                    'profile_image': user.profile_image.url if user.profile_image else None
-                }
-            }, status=status.HTTP_201_CREATED)
-        else:
-            return Response({
-                'success': False,
-                'error': 'تم إنشاء الحساب ولكن فشل إرسال بريد التفعيل. يرجى المحاولة مرة أخرى',
-                'duration': 5000
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+                'verification_url': verification_url  # الرابط البديل
+            })
+        return Response({'error': serializer.errors}, status=400)
     except Exception as e:
-        print(f"Error in register: {str(e)}")
-        return Response({
-            'success': False,
-            'error': 'حدث خطأ أثناء إنشاء الحساب',
-            'duration': 5000
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': str(e)}, status=500)
 
 @csrf_exempt
 @api_view(['POST'])
@@ -245,46 +199,37 @@ def login_view(request):
             'duration': 5000
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@csrf_exempt
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def verify_email(request, token):
+def verify_email(request):
     try:
-        print("\n=== تفاصيل طلب التحقق من البريد ===")
-        print(f"Token: {token}")
+        token = request.GET.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=400)
         
-        # تحويل التوكن إلى UUID
-        token_uuid = uuid.UUID(token)
-        print(f"UUID Token: {token_uuid}")
-        
-        # البحث عن التحقق
-        verification = EmailVerification.objects.get(token=token_uuid)
-        print(f"User: {verification.user.email}")
-        print(f"Current verification status: {verification.is_verified}")
-        
-        if verification.is_verified:
-            return render(request, 'email_verification_success.html', {
-                'message': 'تم تفعيل حسابك مسبقاً'
-            })
-        
-        # تفعيل الحساب
-        verification.is_verified = True
-        verification.save()
-        print(f"New verification status: {verification.is_verified}")
-        
-        return render(request, 'email_verification_success.html', {
-            'message': 'تم تفعيل حسابك بنجاح'
-        })
-        
-    except (ValueError, EmailVerification.DoesNotExist) as e:
-        print(f"Error: {str(e)}")
-        return render(request, 'error.html', {
-            'error': 'رابط التفعيل غير صالح'
-        })
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload['user_id']
+            user = User.objects.get(id=user_id)
+            
+            if user.is_verified:
+                # تحديث الرابط هنا
+                return redirect('https://foryou-api.onrender.com/verification-success')
+            
+            user.is_verified = True
+            user.save()
+            
+            # وهنا أيضاً
+            return redirect('https://foryou-api.onrender.com/verification-success')
+            
+        except jwt.ExpiredSignatureError:
+            return Response({'error': 'Verification link has expired'}, status=400)
+        except (jwt.DecodeError, User.DoesNotExist):
+            return Response({'error': 'Invalid token'}, status=400)
+            
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        return render(request, 'error.html', {
-            'error': 'حدث خطأ أثناء تفعيل الحساب'
-        })
+        return Response({'error': str(e)}, status=500)
 
 @api_view(['POST'])
 def test(request):
