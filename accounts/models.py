@@ -11,6 +11,7 @@ class User(AbstractUser):
         blank=True,
         verbose_name='صورة الملف الشخصي'
     )
+    email_verified = models.BooleanField(default=False)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'full_name']

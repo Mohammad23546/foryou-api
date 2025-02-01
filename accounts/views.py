@@ -218,8 +218,8 @@ def verify_email(request):
                 'message': 'رمز التحقق غير صالح'
             })
 
-        # فك تشفير التوكن
         try:
+            # فك تشفير التوكن
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             user_id = payload.get('user_id')
             
@@ -233,10 +233,13 @@ def verify_email(request):
             user = User.objects.get(id=user_id)
             
             # تفعيل الحساب
-            user.is_active = True
+            user.is_active = True  # تفعيل الحساب
+            user.email_verified = True  # تعيين حالة التحقق من البريد
             user.save()
             
-            return render(request, 'success.html', {
+            print(f"User {user.email} activated successfully. is_active: {user.is_active}, email_verified: {user.email_verified}")
+            
+            return render(request, 'email_verification_success.html', {
                 'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.'
             })
             
