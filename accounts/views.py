@@ -412,3 +412,27 @@ def profile(request):
             'success': False,
             'error': 'حدث خطأ أثناء جلب بيانات الملف الشخصي'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+def refresh_token(request):
+    try:
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({
+                'success': False,
+                'message': 'يجب توفير رمز التحديث'
+            }, status=400)
+            
+        token = RefreshToken(refresh_token)
+        access_token = str(token.access_token)
+        
+        return Response({
+            'success': True,
+            'access': access_token
+        })
+    except Exception as e:
+        print(f"Refresh token error: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'رمز التحديث غير صالح'
+        }, status=400)
