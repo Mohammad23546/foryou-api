@@ -11,7 +11,7 @@ import logging
 from django.http import JsonResponse, HttpResponse
 import json
 from .models import EmailVerification
-from .utils import send_verification_email
+from .utils import send_verification_email, generate_verification_token
 from django.utils import timezone
 from rest_framework.renderers import TemplateHTMLRenderer, JSONRenderer
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -29,6 +29,7 @@ from django.conf import settings
 import jwt
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from .serializers import UserSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +70,8 @@ def register(request):
             user.save()
             
             try:
-                # إنشاء توكن التحقق
                 token = generate_verification_token(user)
-                
-                # تحديث رابط التحقق
                 verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
-                
-                # محاولة إرسال البريد
                 email_sent = send_verification_email(user, token)
                 
                 if not email_sent:
@@ -90,7 +86,7 @@ def register(request):
                     'verification_url': verification_url
                 })
             except Exception as email_error:
-                print(f"Email Error: {str(email_error)}")  # لتتبع الخطأ
+                print(f"Email Error: {str(email_error)}")
                 return Response({
                     'error': 'خطأ في إرسال البريد',
                     'details': str(email_error)
@@ -98,7 +94,7 @@ def register(request):
                 
         return Response({'error': serializer.errors}, status=400)
     except Exception as e:
-        print(f"Registration Error: {str(e)}")  # لتتبع الخطأ
+        print(f"Registration Error: {str(e)}")
         return Response({'error': str(e)}, status=500)
 
 @csrf_exempt
