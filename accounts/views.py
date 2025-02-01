@@ -213,41 +213,53 @@ def login_view(request):
 def verify_email(request):
     try:
         token = request.GET.get('token')
+        print(f"Received verification token: {token}")  # تتبع التوكن المستلم
+        
         if not token:
+            print("No token provided")
             return render(request, 'error.html', {
                 'message': 'رمز التحقق غير صالح'
             })
 
         try:
+            # فك تشفير التوكن
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             user_id = payload.get('user_id')
+            print(f"Decoded token payload: {payload}")  # تتبع محتوى التوكن
             
             if not user_id:
+                print("No user_id in token")
                 return render(request, 'error.html', {
                     'message': 'رمز التحقق غير صالح'
                 })
                 
+            # البحث عن المستخدم
             User = get_user_model()
             user = User.objects.get(id=user_id)
+            print(f"Found user: {user.email}")  # تتبع المستخدم
             
-            user.is_active = True  # نستخدم is_active فقط
+            # تفعيل الحساب
+            print(f"Before activation - is_active: {user.is_active}")  # حالة قبل التفعيل
+            user.is_active = True
             user.save()
-            
-            print(f"User {user.email} activated successfully. is_active: {user.is_active}")
+            print(f"After activation - is_active: {user.is_active}")  # حالة بعد التفعيل
             
             return render(request, 'email_verification_success.html', {
                 'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.'
             })
             
         except jwt.ExpiredSignatureError:
+            print("Token expired")
             return render(request, 'error.html', {
                 'message': 'انتهت صلاحية رمز التحقق'
             })
         except jwt.InvalidTokenError:
+            print("Invalid token")
             return render(request, 'error.html', {
                 'message': 'رمز التحقق غير صالح'
             })
         except User.DoesNotExist:
+            print(f"User with id {user_id} not found")
             return render(request, 'error.html', {
                 'message': 'المستخدم غير موجود'
             })

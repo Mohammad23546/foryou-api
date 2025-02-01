@@ -22,30 +22,27 @@ def generate_verification_token(user):
 
 def send_verification_email(user, token):
     try:
-        # تحديث طريقة إنشاء رابط التحقق
         verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
         
-        context = {
+        # قراءة قالب البريد
+        html_message = render_to_string('email/verification_email.html', {
             'user': user,
-            'token': token,  # نرسل التوكن مباشرة
             'verification_url': verification_url
-        }
-        
-        html_message = render_to_string('email/verification_email.html', context)
-        plain_message = strip_tags(html_message)
+        })
         
         # إرسال البريد
         send_mail(
-            subject='تأكيد البريد الإلكتروني',
-            message=plain_message,
+            subject='تفعيل حسابك',
+            message=strip_tags(html_message),
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
             html_message=html_message,
             fail_silently=False,
         )
         
+        print(f"Verification email sent to {user.email} with URL: {verification_url}")
         return True
         
     except Exception as e:
-        print(f"خطأ في إرسال البريد: {str(e)}")
+        print(f"Error sending verification email: {str(e)}")
         return False 
