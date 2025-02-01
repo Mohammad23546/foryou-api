@@ -63,39 +63,37 @@ def test(request):
 @permission_classes([AllowAny])
 def register(request):
     try:
+        print("Received registration data:", request.data)  # لطباعة البيانات المستلمة
+        
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             user.set_password(request.data['password'])
             user.save()
             
-            try:
-                token = generate_verification_token(user)
-                verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
-                email_sent = send_verification_email(user, token)
-                
-                if not email_sent:
-                    return Response({
-                        'error': 'فشل في إرسال بريد التحقق',
-                        'details': 'حدث خطأ أثناء إرسال البريد الإلكتروني'
-                    }, status=500)
-                
-                return Response({
-                    'success': True,
-                    'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
-                    'verification_url': verification_url
-                })
-            except Exception as email_error:
-                print(f"Email Error: {str(email_error)}")
-                return Response({
-                    'error': 'خطأ في إرسال البريد',
-                    'details': str(email_error)
-                }, status=500)
-                
-        return Response({'error': serializer.errors}, status=400)
+            token = generate_verification_token(user)
+            verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
+            email_sent = send_verification_email(user, token)
+            
+            return Response({
+                'success': True,
+                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
+                'verification_url': verification_url
+            })
+        else:
+            print("Validation errors:", serializer.errors)  # لطباعة أخطاء التحقق
+            return Response({
+                'success': False,
+                'message': 'بيانات غير صالحة',
+                'errors': serializer.errors
+            }, status=400)
+            
     except Exception as e:
-        print(f"Registration Error: {str(e)}")
-        return Response({'error': str(e)}, status=500)
+        print(f"Registration error: {str(e)}")  # لطباعة أي أخطاء أخرى
+        return Response({
+            'success': False,
+            'message': f'حدث خطأ أثناء التسجيل: {str(e)}'
+        }, status=500)
 
 @csrf_exempt
 @api_view(['POST'])
