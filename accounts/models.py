@@ -4,13 +4,13 @@ import uuid
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    email_verified = models.BooleanField(default=False)
     username = models.CharField(
         max_length=150,
         unique=False,
         help_text='Required. 150 characters or fewer.'
     )
-    full_name = models.CharField(max_length=255)
+    is_email_verified = models.BooleanField(default=False)
+    full_name = models.CharField(max_length=255, blank=True)
     profile_image = models.ImageField(
         upload_to='profile_images/',
         null=True,
