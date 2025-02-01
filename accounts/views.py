@@ -77,8 +77,7 @@ def register(request):
             
             return Response({
                 'success': True,
-                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.',
-                'verification_url': verification_url
+                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.'
             })
         else:
             print("Validation errors:", serializer.errors)  # لطباعة أخطاء التحقق
