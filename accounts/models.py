@@ -9,7 +9,6 @@ class User(AbstractUser):
         unique=False,
         help_text='Required. 150 characters or fewer.'
     )
-    is_email_verified = models.BooleanField(default=False)
     full_name = models.CharField(max_length=255, blank=True)
     profile_image = models.ImageField(
         upload_to='profile_images/',

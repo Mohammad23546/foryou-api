@@ -230,11 +230,10 @@ def verify_email(request):
             User = get_user_model()
             user = User.objects.get(id=user_id)
             
-            user.is_active = True
-            user.is_email_verified = True  # استخدام الاسم الجديد للحقل
+            user.is_active = True  # نستخدم is_active فقط
             user.save()
             
-            print(f"User {user.email} activated successfully. is_active: {user.is_active}, is_email_verified: {user.is_email_verified}")
+            print(f"User {user.email} activated successfully. is_active: {user.is_active}")
             
             return render(request, 'email_verification_success.html', {
                 'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.'
