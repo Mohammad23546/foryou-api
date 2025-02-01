@@ -9,7 +9,10 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name')
         extra_kwargs = {
             'password': {'write_only': True},
-            'email': {'required': True}
+            'email': {'required': True},
+            'username': {
+                'validators': []  # إزالة جميع المدققين (بما فيها التحقق من التكرار)
+            }
         }
 
     def create(self, validated_data):
