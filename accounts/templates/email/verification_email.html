@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل حسابك</title>
+    <title>تفعيل حسابك في تطبيق لأجلك</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,84 +15,120 @@
         .container {
             max-width: 600px;
             margin: 20px auto;
-            padding: 30px;
+            padding: 0;
             background: white;
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
         .header {
             text-align: center;
-            padding: 20px;
+            padding: 40px 20px;
             background: linear-gradient(135deg, #4e54c8, #8f94fb);
             color: white;
-            border-radius: 10px 10px 0 0;
-            margin: -30px -30px 20px -30px;
         }
-        .welcome {
-            font-size: 24px;
+        .app-name {
+            font-size: 32px;
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .welcome {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .content {
+            padding: 30px;
+            background: white;
+        }
         .message {
             color: #444;
-            margin: 20px 0;
             font-size: 16px;
+            margin: 20px 0;
+            line-height: 1.8;
         }
-        .button {
+        .button-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+        .verify-button {
             display: inline-block;
-            padding: 12px 30px;
+            padding: 15px 40px;
             background: linear-gradient(135deg, #4e54c8, #8f94fb);
             color: white;
             text-decoration: none;
             border-radius: 25px;
             font-weight: bold;
-            margin: 20px 0;
-            text-align: center;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(78, 84, 200, 0.2);
         }
-        .button:hover {
-            background: linear-gradient(135deg, #3f44a0, #7a7fe6);
+        .verify-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 84, 200, 0.3);
+        }
+        .note {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+            font-size: 14px;
+            color: #666;
         }
         .footer {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+            padding: 30px;
+            background: #f8f9ff;
             color: #666;
             font-size: 14px;
+            border-top: 1px solid #eee;
         }
-        .logo {
-            width: 100px;
-            height: auto;
-            margin-bottom: 20px;
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            color: #4e54c8;
+            text-decoration: none;
+            margin: 0 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://your-logo-url.com/logo.png" alt="For You" class="logo">
+            <div class="app-name">For You</div>
             <div class="welcome">مرحباً {{ user.username }}!</div>
         </div>
         
-        <div class="message">
-            شكراً لتسجيلك في تطبيقنا. نحن سعداء بانضمامك إلينا!
-        </div>
-        
-        <div class="message">
-            للبدء باستخدام حسابك، يرجى تفعيل بريدك الإلكتروني من خلال النقر على الزر أدناه:
-        </div>
-        
-        <div style="text-align: center;">
-            <a href="{{ verification_url }}" class="button">تفعيل الحساب</a>
-        </div>
-        
-        <div class="message">
-            إذا لم تقم بإنشاء هذا الحساب، يمكنك تجاهل هذا البريد.
+        <div class="content">
+            <div class="message">
+                شكراً لانضمامك إلى عائلة For You. نحن سعداء جداً بوجودك معنا!
+            </div>
+            
+            <div class="message">
+                للبدء في استخدام حسابك والاستفادة من جميع مميزات التطبيق، يرجى تفعيل بريدك الإلكتروني من خلال النقر على الزر أدناه:
+            </div>
+            
+            <div class="button-container">
+                <a href="{{ verification_url }}" class="verify-button">تفعيل الحساب</a>
+            </div>
+            
+            <div class="note">
+                <strong>ملاحظة:</strong> رابط التفعيل صالح لمدة 24 ساعة فقط. إذا لم تقم بتفعيل حسابك خلال هذه المدة، يمكنك طلب رابط جديد عند محاولة تسجيل الدخول.
+            </div>
+            
+            <div class="message">
+                إذا لم تقم بإنشاء هذا الحساب، يمكنك تجاهل هذا البريد بكل أمان.
+            </div>
         </div>
         
         <div class="footer">
-            <p>هذا البريد تم إرساله تلقائياً، يرجى عدم الرد عليه</p>
-            <p>جميع الحقوق محفوظة © 2025 For You</p>
+            <div>مع تحيات فريق For You</div>
+            <div class="social-links">
+                <a href="#">تواصل معنا</a> |
+                <a href="#">سياسة الخصوصية</a> |
+                <a href="#">شروط الاستخدام</a>
+            </div>
+            <div>جميع الحقوق محفوظة © 2025 For You</div>
         </div>
     </div>
 </body>
