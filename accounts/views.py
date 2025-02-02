@@ -190,18 +190,17 @@ def login(request):
         }, status=400)
 
 @api_view(['GET'])
-@renderer_classes([TemplateHTMLRenderer, JSONRenderer])
+@permission_classes([AllowAny])  # السماح للجميع بالوصول
 def verify_email(request):
     try:
         token = request.GET.get('token')
         if not token:
-            return Response({
-                'success': False,
-                'message': 'رمز التحقق مفقود',
-                'code': 'MISSING_TOKEN'
-            }, status=400)
+            return render(request, 'error.html', {
+                'message': 'رمز التحقق مفقود'
+            })
 
         try:
+            # فك تشفير التوكن
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
             user = User.objects.get(id=payload['user_id'])
             
@@ -212,6 +211,8 @@ def verify_email(request):
 
             user.is_active = True
             user.save()
+
+            print(f"تم تفعيل حساب المستخدم: {user.email}")
 
             return render(request, 'email/verification_success.html', {
                 'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول'
