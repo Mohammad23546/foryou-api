@@ -466,3 +466,21 @@ def refresh_token(request):
             'success': False,
             'message': 'رمز التحديث غير صالح'
         }, status=400)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def clear_database(request):
+    try:
+        # حذف جميع المستخدمين
+        User.objects.all().delete()
+        
+        return Response({
+            'success': True,
+            'message': 'تم إفراغ قاعدة البيانات بنجاح'
+        })
+    except Exception as e:
+        print(f"Error clearing database: {str(e)}")
+        return Response({
+            'success': False,
+            'message': 'حدث خطأ أثناء إفراغ قاعدة البيانات'
+        }, status=400)

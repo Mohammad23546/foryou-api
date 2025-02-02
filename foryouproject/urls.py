@@ -19,14 +19,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
+from accounts.views import clear_database
 
 def home(request):
     return JsonResponse({
         "status": "success",
         "message": "API is running",
         "endpoints": {
-            "auth": "/api/auth/",
-            "reminders": "/api/"
+            "auth": "https://foryou-api.onrender.com/api/auth/",
+            "reminders": "https://foryou-api.onrender.com/api/"
         }
     })
 
@@ -35,4 +36,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/', include('reminders.urls')),
+    path('api/clear-database/', clear_database, name='clear_database'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
