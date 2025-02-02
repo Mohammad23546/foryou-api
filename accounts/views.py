@@ -67,6 +67,20 @@ def register(request):
         username = request.data.get('username')
         password = request.data.get('password')
 
+        print(f"=== بداية طلب التسجيل ===")
+        print(f"البيانات المستلمة: {request.data}")
+        print(f"البريد الإلكتروني: {email}")
+        print(f"اسم المستخدم: {username}")
+
+        # التحقق من وجود البيانات المطلوبة
+        if not all([email, username, password]):
+            return Response({
+                'success': False,
+                'message': 'يرجى تعبئة جميع الحقول المطلوبة',
+                'code': 'MISSING_FIELDS'
+            }, status=400)
+
+        # التحقق من وجود البريد الإلكتروني
         if User.objects.filter(email=email).exists():
             return Response({
                 'success': False,
@@ -74,6 +88,7 @@ def register(request):
                 'code': 'EMAIL_EXISTS'
             }, status=400)
 
+        # إنشاء المستخدم
         user = User.objects.create_user(
             email=email,
             username=username,
@@ -84,26 +99,28 @@ def register(request):
         # إرسال بريد التفعيل
         try:
             send_verification_email(user)
+            print(f"تم إرسال بريد التفعيل إلى: {email}")
+            
+            return Response({
+                'success': True,
+                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب',
+                'code': 'REGISTRATION_SUCCESS'
+            }, status=201)
+
         except Exception as e:
-            print(f"Email sending error: {str(e)}")
+            print(f"خطأ في إرسال بريد التفعيل: {str(e)}")
             user.delete()  # حذف المستخدم إذا فشل إرسال البريد
             return Response({
                 'success': False,
-                'message': 'حدث خطأ أثناء إرسال بريد التفعيل',
+                'message': 'حدث خطأ أثناء إرسال بريد التفعيل. الرجاء المحاولة مرة أخرى',
                 'code': 'EMAIL_SEND_ERROR'
             }, status=400)
-
-        return Response({
-            'success': True,
-            'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني',
-            'code': 'REGISTRATION_SUCCESS'
-        }, status=201)
 
     except Exception as e:
         print(f"Registration error: {str(e)}")
         return Response({
             'success': False,
-            'message': 'حدث خطأ أثناء إنشاء الحساب',
+            'message': 'حدث خطأ أثناء إنشاء الحساب. الرجاء المحاولة مرة أخرى',
             'code': 'REGISTRATION_ERROR'
         }, status=400)
 
