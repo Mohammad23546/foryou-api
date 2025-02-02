@@ -152,8 +152,12 @@ TEMPLATES = [
 # إعدادات قاعدة البيانات
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DATABASE_NAME', 'foryou_db'),
+        'USER': os.getenv('DATABASE_USER'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
+        'HOST': os.getenv('DATABASE_HOST'),
+        'PORT': os.getenv('DATABASE_PORT', '5432'),
     }
 }
 
@@ -204,8 +208,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'mohamadmahdiii496@gmail.com')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'your-app-password')  # تأكد من هذا
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # تعطيل DEBUG_EMAIL في الإنتاج
 DEBUG_EMAIL = False  # هذا سيمنع طباعة البريد في التيرمنال
@@ -231,3 +235,6 @@ DEBUG = False
 # استخدام المتغيرات من ملف .env
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+# إضافة هذا السطر
+SITE_URL = 'https://foryou-api.onrender.com'  # عنوان موقعك على Render

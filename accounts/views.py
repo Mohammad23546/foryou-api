@@ -82,7 +82,16 @@ def register(request):
         )
 
         # إرسال بريد التفعيل
-        send_verification_email(user)
+        try:
+            send_verification_email(user)
+        except Exception as e:
+            print(f"Email sending error: {str(e)}")
+            user.delete()  # حذف المستخدم إذا فشل إرسال البريد
+            return Response({
+                'success': False,
+                'message': 'حدث خطأ أثناء إرسال بريد التفعيل',
+                'code': 'EMAIL_SEND_ERROR'
+            }, status=400)
 
         return Response({
             'success': True,
@@ -94,7 +103,7 @@ def register(request):
         print(f"Registration error: {str(e)}")
         return Response({
             'success': False,
-            'message': 'حدث خطأ أثناء إنشاء الحساب. الرجاء المحاولة مرة أخرى',
+            'message': 'حدث خطأ أثناء إنشاء الحساب',
             'code': 'REGISTRATION_ERROR'
         }, status=400)
 
