@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفعيل حسابك في تطبيق لأجلك</title>
+    <title>تفعيل الحساب في تطبيق لأجلك</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             background-color: #f5f8ff;
+            text-align: center;
         }
         .container {
             max-width: 600px;
@@ -20,6 +21,7 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             overflow: hidden;
+            text-align: right;
         }
         .header {
             text-align: center;
@@ -39,12 +41,14 @@
         .content {
             padding: 30px;
             background: white;
+            text-align: right;
         }
         .message {
             color: #444;
             font-size: 16px;
             margin: 20px 0;
             line-height: 1.8;
+            text-align: right;
         }
         .button-container {
             text-align: center;
@@ -90,18 +94,27 @@
             text-decoration: none;
             margin: 0 10px;
         }
+        .email-title {
+            text-align: center;
+            color: #4e54c8;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="email-title">تفعيل حسابك في تطبيق لأجلك</div>
         <div class="header">
-            <div class="app-name">For You</div>
+            <div class="app-name">لأجلك</div>
             <div class="welcome">مرحباً {{ user.username }}!</div>
         </div>
         
         <div class="content">
             <div class="message">
-                شكراً لانضمامك إلى عائلة For You. نحن سعداء جداً بوجودك معنا!
+                شكراً لانضمامك إلى عائلة لأجلك. نحن سعداء جداً بوجودك معنا!
             </div>
             
             <div class="message">
@@ -112,23 +125,14 @@
                 <a href="{{ verification_url }}" class="verify-button">تفعيل الحساب</a>
             </div>
             
-            <div class="note">
-                <strong>ملاحظة:</strong> رابط التفعيل صالح لمدة 24 ساعة فقط. إذا لم تقم بتفعيل حسابك خلال هذه المدة، يمكنك طلب رابط جديد عند محاولة تسجيل الدخول.
-            </div>
-            
             <div class="message">
                 إذا لم تقم بإنشاء هذا الحساب، يمكنك تجاهل هذا البريد بكل أمان.
             </div>
         </div>
         
         <div class="footer">
-            <div>مع تحيات فريق For You</div>
-            <div class="social-links">
-                <a href="#">تواصل معنا</a> |
-                <a href="#">سياسة الخصوصية</a> |
-                <a href="#">شروط الاستخدام</a>
-            </div>
-            <div>جميع الحقوق محفوظة © 2025 For You</div>
+            <div>مع تحيات فريق لأجلك</div>
+            <div>جميع الحقوق محفوظة © 2025 لأجلك</div>
         </div>
     </div>
 </body>
