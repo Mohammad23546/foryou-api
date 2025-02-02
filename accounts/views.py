@@ -157,6 +157,7 @@ def login(request):
         }, status=400)
 
 @api_view(['GET'])
+@renderer_classes([TemplateHTMLRenderer, JSONRenderer])
 def verify_email(request):
     try:
         token = request.GET.get('token')
@@ -167,39 +168,36 @@ def verify_email(request):
                 'code': 'MISSING_TOKEN'
             }, status=400)
 
-        # التحقق من التوكن وتفعيل الحساب
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        user = User.objects.get(id=payload['user_id'])
-        
-        if user.is_active:
-            return Response({
-                'success': False,
-                'message': 'الحساب مفعل مسبقاً',
-                'code': 'ALREADY_ACTIVATED'
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user = User.objects.get(id=payload['user_id'])
+            
+            if user.is_active:
+                return render(request, 'email/verification_success.html', {
+                    'message': 'الحساب مفعل مسبقاً'
+                })
+
+            user.is_active = True
+            user.save()
+
+            return render(request, 'email/verification_success.html', {
+                'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول'
             })
 
-        user.is_active = True
-        user.save()
+        except jwt.ExpiredSignatureError:
+            return render(request, 'error.html', {
+                'message': 'رابط التفعيل منتهي الصلاحية'
+            })
+        except (jwt.InvalidTokenError, User.DoesNotExist):
+            return render(request, 'error.html', {
+                'message': 'رابط التفعيل غير صالح'
+            })
 
-        return Response({
-            'success': True,
-            'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول',
-            'code': 'ACTIVATION_SUCCESS'
-        })
-
-    except jwt.ExpiredSignatureError:
-        return Response({
-            'success': False,
-            'message': 'رابط التفعيل منتهي الصلاحية',
-            'code': 'TOKEN_EXPIRED'
-        }, status=400)
     except Exception as e:
         print(f"Verification error: {str(e)}")
-        return Response({
-            'success': False,
-            'message': 'حدث خطأ أثناء تفعيل الحساب',
-            'code': 'VERIFICATION_ERROR'
-        }, status=400)
+        return render(request, 'error.html', {
+            'message': 'حدث خطأ أثناء تفعيل الحساب'
+        })
 
 @api_view(['POST'])
 def test(request):
