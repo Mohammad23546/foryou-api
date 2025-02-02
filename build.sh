@@ -2,10 +2,11 @@
 # exit on error
 set -o errexit
 
-# تثبيت المتطلبات
+# Install dependencies
 pip install -r requirements.txt
 
-# تطبيق الترحيلات
+# Run migrations
+python manage.py makemigrations
 python manage.py migrate
 
 # جمع الملفات الثابتة (إذا كنت تستخدمها)
