@@ -63,156 +63,134 @@ def test(request):
 @permission_classes([AllowAny])
 def register(request):
     try:
-        print("Received registration data:", request.data)
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            user.set_password(request.data['password'])
-            user.is_active = False  # جعل الحساب غير مفعل عند التسجيل
-            user.save()
-            
-            token = generate_verification_token(user)
-            verification_url = f"https://foryou-api.onrender.com/api/auth/verify-email/?token={token}"
-            email_sent = send_verification_email(user, token)
-            
-            return Response({
-                'success': True,
-                'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب.'
-            })
-        else:
-            print("Validation errors:", serializer.errors)  # لطباعة أخطاء التحقق
+        email = request.data.get('email')
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if User.objects.filter(email=email).exists():
             return Response({
                 'success': False,
-                'message': 'بيانات غير صالحة',
-                'errors': serializer.errors
+                'message': 'البريد الإلكتروني مسجل مسبقاً',
+                'code': 'EMAIL_EXISTS'
             }, status=400)
-            
+
+        user = User.objects.create_user(
+            email=email,
+            username=username,
+            password=password,
+            is_active=False
+        )
+
+        # إرسال بريد التفعيل
+        send_verification_email(user)
+
+        return Response({
+            'success': True,
+            'message': 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني',
+            'code': 'REGISTRATION_SUCCESS'
+        }, status=201)
+
     except Exception as e:
-        print(f"Registration error: {str(e)}")  # لطباعة أي أخطاء أخرى
+        print(f"Registration error: {str(e)}")
         return Response({
             'success': False,
-            'message': f'حدث خطأ أثناء التسجيل: {str(e)}'
-        }, status=500)
+            'message': 'حدث خطأ أثناء إنشاء الحساب. الرجاء المحاولة مرة أخرى',
+            'code': 'REGISTRATION_ERROR'
+        }, status=400)
 
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
     try:
-        print("=== بداية طلب تسجيل الدخول ===")
-        data = request.data
-        print("البيانات المستلمة:", data)
-        
-        email = data.get('email')
-        password = data.get('password')
-        print(f"البريد الإلكتروني: {email}")
-        print("كلمة المرور: ***********")
-        
-        User = get_user_model()
-        try:
-            user = User.objects.get(email=email)
-            print(f"تم العثور على المستخدم: {user.email}")
-            
-            if user.check_password(password):
-                if user.is_active:  # نتحقق فقط من is_active
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        'success': True,
-                        'token': str(refresh.access_token),
-                        'refresh': str(refresh),
-                        'user': {
-                            'id': user.id,
-                            'email': user.email,
-                            'username': user.username
-                        }
-                    })
-                else:
-                    # إذا لم يكن الحساب مفعلاً
-                    token = generate_verification_token(user)
-                    send_verification_email(user, token)
-                    return Response({
-                        'success': False,
-                        'error': 'حسابك غير مفعل! يرجى مراجعة بريدك الإلكتروني لتفعيل حسابك',
-                        'requires_activation': True,
-                        'duration': 5000
-                    }, status=401)
-            
-        except User.DoesNotExist:
-            print(f"لم يتم العثور على مستخدم بالبريد: {email}")
-            
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        user = authenticate(request, email=email, password=password)
+
+        if not user:
+            return Response({
+                'success': False,
+                'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+                'code': 'INVALID_CREDENTIALS'
+            }, status=401)
+
+        if not user.is_active:
+            return Response({
+                'success': False,
+                'message': 'الرجاء تفعيل حسابك من خلال البريد الإلكتروني',
+                'code': 'ACCOUNT_NOT_ACTIVATED'
+            }, status=401)
+
+        refresh = RefreshToken.for_user(user)
+
         return Response({
-            'success': False,
-            'error': 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
-        }, status=401)
-        
+            'success': True,
+            'message': 'تم تسجيل الدخول بنجاح',
+            'code': 'LOGIN_SUCCESS',
+            'data': {
+                'token': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username
+                }
+            }
+        })
+
     except Exception as e:
-        print(f"خطأ في تسجيل الدخول: {str(e)}")
+        print(f"Login error: {str(e)}")
         return Response({
             'success': False,
-            'error': 'حدث خطأ أثناء تسجيل الدخول'
-        }, status=500)
+            'message': 'حدث خطأ أثناء تسجيل الدخول. الرجاء المحاولة مرة أخرى',
+            'code': 'LOGIN_ERROR'
+        }, status=400)
 
 @api_view(['GET'])
-@permission_classes([AllowAny])
 def verify_email(request):
     try:
         token = request.GET.get('token')
-        print(f"Received verification token: {token}")  # تتبع التوكن المستلم
-        
         if not token:
-            print("No token provided")
-            return render(request, 'error.html', {
-                'message': 'رمز التحقق غير صالح'
+            return Response({
+                'success': False,
+                'message': 'رمز التحقق مفقود',
+                'code': 'MISSING_TOKEN'
+            }, status=400)
+
+        # التحقق من التوكن وتفعيل الحساب
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        user = User.objects.get(id=payload['user_id'])
+        
+        if user.is_active:
+            return Response({
+                'success': False,
+                'message': 'الحساب مفعل مسبقاً',
+                'code': 'ALREADY_ACTIVATED'
             })
 
-        try:
-            # فك تشفير التوكن
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            user_id = payload.get('user_id')
-            print(f"Decoded token payload: {payload}")  # تتبع محتوى التوكن
-            
-            if not user_id:
-                print("No user_id in token")
-                return render(request, 'error.html', {
-                    'message': 'رمز التحقق غير صالح'
-                })
-                
-            # البحث عن المستخدم
-            User = get_user_model()
-            user = User.objects.get(id=user_id)
-            print(f"Found user: {user.email}")  # تتبع المستخدم
-            
-            # تفعيل الحساب
-            print(f"Before activation - is_active: {user.is_active}")  # حالة قبل التفعيل
-            user.is_active = True
-            user.save()
-            print(f"After activation - is_active: {user.is_active}")  # حالة بعد التفعيل
-            
-            return render(request, 'email_verification_success.html', {
-                'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول.'
-            })
-            
-        except jwt.ExpiredSignatureError:
-            print("Token expired")
-            return render(request, 'error.html', {
-                'message': 'انتهت صلاحية رمز التحقق'
-            })
-        except jwt.InvalidTokenError:
-            print("Invalid token")
-            return render(request, 'error.html', {
-                'message': 'رمز التحقق غير صالح'
-            })
-        except User.DoesNotExist:
-            print(f"User with id {user_id} not found")
-            return render(request, 'error.html', {
-                'message': 'المستخدم غير موجود'
-            })
-            
+        user.is_active = True
+        user.save()
+
+        return Response({
+            'success': True,
+            'message': 'تم تفعيل حسابك بنجاح! يمكنك الآن تسجيل الدخول',
+            'code': 'ACTIVATION_SUCCESS'
+        })
+
+    except jwt.ExpiredSignatureError:
+        return Response({
+            'success': False,
+            'message': 'رابط التفعيل منتهي الصلاحية',
+            'code': 'TOKEN_EXPIRED'
+        }, status=400)
     except Exception as e:
         print(f"Verification error: {str(e)}")
-        return render(request, 'error.html', {
-            'message': 'حدث خطأ أثناء التحقق'
-        })
+        return Response({
+            'success': False,
+            'message': 'حدث خطأ أثناء تفعيل الحساب',
+            'code': 'VERIFICATION_ERROR'
+        }, status=400)
 
 @api_view(['POST'])
 def test(request):
