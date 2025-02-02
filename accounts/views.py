@@ -135,14 +135,12 @@ def login(request):
         print(f"=== بداية طلب تسجيل الدخول ===")
         print(f"البيانات المستلمة: {request.data}")
         print(f"البريد الإلكتروني: {email}")
-        print(f"كلمة المرور: {'*' * len(password)}")
 
         try:
             user = User.objects.get(email=email)
             print(f"تم العثور على المستخدم: {user.email}")
-            print(f"حالة التفعيل: {user.is_active}")
 
-            # التحقق من كلمة المرور أولاً
+            # التحقق من كلمة المرور
             if not user.check_password(password):
                 print(f"كلمة المرور غير صحيحة للمستخدم: {user.email}")
                 return Response({
@@ -154,20 +152,18 @@ def login(request):
             # التحقق من حالة التفعيل
             if not user.is_active:
                 print(f"المستخدم غير مفعل: {user.email}")
-                # إرسال بريد التفعيل مرة أخرى
                 try:
                     verification_token = send_verification_email(user)
                     return Response({
                         'success': False,
                         'message': 'الحساب غير مفعل. تم إرسال رابط تفعيل جديد إلى بريدك الإلكتروني',
-                        'code': 'ACCOUNT_NOT_ACTIVATED',
-                        'verification_sent': True
+                        'code': 'ACCOUNT_NOT_ACTIVATED'
                     }, status=401)
                 except Exception as e:
                     print(f"خطأ في إرسال بريد التفعيل: {str(e)}")
                     return Response({
                         'success': False,
-                        'message': 'الحساب غير مفعل وحدث خطأ في إرسال رابط التفعيل. يرجى المحاولة مرة أخرى',
+                        'message': 'الحساب غير مفعل وحدث خطأ في إرسال رابط التفعيل',
                         'code': 'VERIFICATION_EMAIL_ERROR'
                     }, status=401)
 
@@ -194,8 +190,8 @@ def login(request):
             print(f"لم يتم العثور على مستخدم بالبريد: {email}")
             return Response({
                 'success': False,
-                'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
-                'code': 'INVALID_CREDENTIALS'
+                'message': 'البريد الإلكتروني غير مسجل. يرجى إنشاء حساب جديد',
+                'code': 'ACCOUNT_NOT_FOUND'
             }, status=401)
 
     except Exception as e:
