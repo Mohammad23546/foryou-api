@@ -115,38 +115,50 @@ def login(request):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        user = authenticate(request, email=email, password=password)
+        # التحقق من وجود المستخدم أولاً
+        try:
+            user = User.objects.get(email=email)
+            
+            # التحقق من حالة التفعيل
+            if not user.is_active:
+                return Response({
+                    'success': False,
+                    'message': 'الحساب غير مفعل. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب',
+                    'code': 'ACCOUNT_NOT_ACTIVATED'
+                }, status=401)
 
-        if not user:
+            # التحقق من كلمة المرور
+            if not user.check_password(password):
+                return Response({
+                    'success': False,
+                    'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
+                    'code': 'INVALID_CREDENTIALS'
+                }, status=401)
+
+            # إنشاء التوكن
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'success': True,
+                'message': 'تم تسجيل الدخول بنجاح',
+                'code': 'LOGIN_SUCCESS',
+                'data': {
+                    'token': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'user': {
+                        'id': user.id,
+                        'email': user.email,
+                        'username': user.username
+                    }
+                }
+            })
+
+        except User.DoesNotExist:
             return Response({
                 'success': False,
                 'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
                 'code': 'INVALID_CREDENTIALS'
             }, status=401)
-
-        if not user.is_active:
-            return Response({
-                'success': False,
-                'message': 'الرجاء تفعيل حسابك من خلال البريد الإلكتروني',
-                'code': 'ACCOUNT_NOT_ACTIVATED'
-            }, status=401)
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
-            'success': True,
-            'message': 'تم تسجيل الدخول بنجاح',
-            'code': 'LOGIN_SUCCESS',
-            'data': {
-                'token': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                    'username': user.username
-                }
-            }
-        })
 
     except Exception as e:
         print(f"Login error: {str(e)}")
