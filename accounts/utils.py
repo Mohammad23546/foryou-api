@@ -30,7 +30,7 @@ def send_verification_email(user):
         
         # إرسال البريد بتنسيق HTML
         send_mail(
-            subject='تفعيل حسابك',
+            subject='تفعيل حسابك في تطبيق لأجلك',
             message='',  # الرسالة النصية فارغة لأننا نستخدم HTML
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
