@@ -18,24 +18,31 @@ def generate_verification_token(user):
     return token
 
 def send_verification_email(user):
-    token = generate_verification_token(user)
-    verification_url = f"{settings.SITE_URL}/api/auth/verify-email/?token={token}"
-    
     try:
-        html_message = render_to_string('email/verification_email.html', {
-            'user': user,
-            'verification_url': verification_url
-        })
+        token = generate_verification_token(user)
+        verification_url = f"{settings.SITE_URL}/api/auth/verify-email/?token={token}"
+        
+        subject = 'تفعيل حسابك'
+        message = f'''
+        مرحباً {user.username}،
+        
+        لتفعيل حسابك يرجى النقر على الرابط التالي:
+        {verification_url}
+        
+        إذا لم تقم بإنشاء هذا الحساب، يرجى تجاهل هذا البريد.
+        '''
         
         send_mail(
-            subject='تفعيل حسابك',
-            message=f'مرحباً {user.username}،\nلتفعيل حسابك يرجى النقر على الرابط التالي:\n{verification_url}',
+            subject=subject,
+            message=message,
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
-            html_message=html_message,
             fail_silently=False
         )
+        
+        print(f"Verification email sent to {user.email} with URL: {verification_url}")
         return token
+        
     except Exception as e:
-        print(f"Error sending email: {str(e)}")
+        print(f"Error sending verification email: {str(e)}")
         raise 

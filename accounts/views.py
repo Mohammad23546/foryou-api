@@ -115,28 +115,34 @@ def login(request):
         email = request.data.get('email')
         password = request.data.get('password')
 
-        # التحقق من وجود المستخدم أولاً
+        print(f"=== بداية طلب تسجيل الدخول ===")
+        print(f"البيانات المستلمة: {request.data}")
+        print(f"البريد الإلكتروني: {email}")
+        print(f"كلمة المرور: {'*' * len(password)}")
+
         try:
             user = User.objects.get(email=email)
-            
-            # التحقق من حالة التفعيل
+            print(f"تم العثور على المستخدم: {user.email}")
+            print(f"حالة التفعيل: {user.is_active}")
+
             if not user.is_active:
+                print(f"المستخدم غير مفعل: {user.email}")
                 return Response({
                     'success': False,
                     'message': 'الحساب غير مفعل. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب',
                     'code': 'ACCOUNT_NOT_ACTIVATED'
                 }, status=401)
 
-            # التحقق من كلمة المرور
             if not user.check_password(password):
+                print(f"كلمة المرور غير صحيحة للمستخدم: {user.email}")
                 return Response({
                     'success': False,
                     'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
                     'code': 'INVALID_CREDENTIALS'
                 }, status=401)
 
-            # إنشاء التوكن
             refresh = RefreshToken.for_user(user)
+            print(f"تم إنشاء التوكن للمستخدم: {user.email}")
 
             return Response({
                 'success': True,
@@ -148,12 +154,14 @@ def login(request):
                     'user': {
                         'id': user.id,
                         'email': user.email,
-                        'username': user.username
+                        'username': user.username,
+                        'is_active': user.is_active
                     }
                 }
             })
 
         except User.DoesNotExist:
+            print(f"لم يتم العثور على مستخدم بالبريد: {email}")
             return Response({
                 'success': False,
                 'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
