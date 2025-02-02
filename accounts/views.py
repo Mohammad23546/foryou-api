@@ -125,14 +125,7 @@ def login(request):
             print(f"تم العثور على المستخدم: {user.email}")
             print(f"حالة التفعيل: {user.is_active}")
 
-            if not user.is_active:
-                print(f"المستخدم غير مفعل: {user.email}")
-                return Response({
-                    'success': False,
-                    'message': 'الحساب غير مفعل. يرجى التحقق من بريدك الإلكتروني لتفعيل الحساب',
-                    'code': 'ACCOUNT_NOT_ACTIVATED'
-                }, status=401)
-
+            # التحقق من كلمة المرور أولاً
             if not user.check_password(password):
                 print(f"كلمة المرور غير صحيحة للمستخدم: {user.email}")
                 return Response({
@@ -140,6 +133,26 @@ def login(request):
                     'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة',
                     'code': 'INVALID_CREDENTIALS'
                 }, status=401)
+
+            # التحقق من حالة التفعيل
+            if not user.is_active:
+                print(f"المستخدم غير مفعل: {user.email}")
+                # إرسال بريد التفعيل مرة أخرى
+                try:
+                    verification_token = send_verification_email(user)
+                    return Response({
+                        'success': False,
+                        'message': 'الحساب غير مفعل. تم إرسال رابط تفعيل جديد إلى بريدك الإلكتروني',
+                        'code': 'ACCOUNT_NOT_ACTIVATED',
+                        'verification_sent': True
+                    }, status=401)
+                except Exception as e:
+                    print(f"خطأ في إرسال بريد التفعيل: {str(e)}")
+                    return Response({
+                        'success': False,
+                        'message': 'الحساب غير مفعل وحدث خطأ في إرسال رابط التفعيل. يرجى المحاولة مرة أخرى',
+                        'code': 'VERIFICATION_EMAIL_ERROR'
+                    }, status=401)
 
             refresh = RefreshToken.for_user(user)
             print(f"تم إنشاء التوكن للمستخدم: {user.email}")
